@@ -5,25 +5,23 @@ require_once __DIR__ . "/db.php";
 
 class Controller {
 
-    private $view = [
-        'default' => 'actionMain'
-    ];
-
     private $config;
     private $db;
     private $error;
 
     public function __construct()
     {
-        $page = $_GET['view'] ?? 'default';
-        if (!isset($this->view[$page])) {
-            throw new Exception('Page not found');
-        }
+        session_start();
+        $page = $_GET['view'] ?? 'main';
         try {
+            $method = 'action' . ucfirst($page);
+            if (!method_exists($this, $method)) {
+                throw new Exception('Page not found');
+            }
             $this->config = new Config();
             $this->db = new Db($this->config->getDb());
-            $action = $this->view[$page];
-            $this->$action();
+            $this->$method();
+
         } catch (Exception $e) {
             $this->error = $e;
             $this->actionError();
@@ -37,8 +35,37 @@ class Controller {
         include __DIR__ . "/view/layout.php";
     }
 
+    public function actionAdmin()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            header('Location: /?view=login');
+            die();
+        }
+        $view = 'admin';
+        include __DIR__ . "/view/layout.php";
+    }
+
+    public function actionLogin()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $login = $_POST['login'];
+            $pass = $_POST['pass'];
+            if (md5($login.$pass) === $this->config->getAdminHash()) {
+                $_SESSION['is_admin'] = true;
+                header('Location: /?view=admin');
+            } else {
+                throw new Exception('Incorrect identity');
+            }
+        } else {
+            $view = 'login';
+            include __DIR__ . "/view/layout.php";
+        }
+    }
+
     public function actionError()
     {
-        var_dump($this->error);
+        $error = $this->error;
+        $view = 'error';
+        include __DIR__ . "/view/layout.php";
     }
 }

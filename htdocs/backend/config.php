@@ -3,6 +3,7 @@
 class Config {
     private $db;
     private $domain;
+    private $admin;
 
     public function __construct() {
         if (!file_exists(__DIR__ . '/config.json')) {
@@ -11,6 +12,7 @@ class Config {
         $config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
         $this->db = $config['db'];
         $this->domain = $config['domain'];
+        $this->admin = $config['admin'];
     }
 
     public function getDb() {
@@ -19,5 +21,9 @@ class Config {
 
     public function getDomain() {
         return $this->domain;
+    }
+
+    public function getAdminHash() {
+        return $this->admin['hash'];
     }
 }
