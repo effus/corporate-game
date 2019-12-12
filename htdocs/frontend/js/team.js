@@ -26,7 +26,7 @@ const Team = {
             });
     },
     update: (data) => {
-        document.querySelector('.team-count').innerHTML = data.teamCount;
+        document.querySelector('.team-count').innerHTML = data.gamersCount;
     }
 }
 

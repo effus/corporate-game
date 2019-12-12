@@ -45,7 +45,7 @@
             
             <div class="row">
               <div class="col">
-                <input type="text" class="form-control w-100" name="gamer" placeholder="Имя и Фамилия">
+                <input type="text" class="form-control w-100" name="gamer" placeholder="Имя/Фамилия">
               </div>
               <div class="col-4">
                 <button type="submit" class="btn btn-primary w-100">Ok</button>

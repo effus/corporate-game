@@ -1,3 +1,9 @@
+<?php
+/**
+ * @var $answerHash string
+ */
+?>
+
 <style>
 button {
     font-size: 50px;
@@ -33,3 +39,7 @@ button {
 
 <script src="/frontend/js/axios.min.js"></script>
 <script src="/frontend/js/answer.js?r=<?=rand(0,100000)?>"></script>
+
+<script>
+    Answer.answerHash = '<?=$answerHash?>';
+</script>

@@ -1,7 +1,18 @@
 const Answer = {
-    canContinue: true,
+    //canContinue: true,
     answerHash: '',
-    isAnswered: false,
+    roundState: 0,
+    currentAnswerId: null,
+    canAnswer: false,
+    myAnswerId: null,
+    getStates: () => {
+        return {
+            PLAYED: 1,
+            HAS_ANSWER: 2,
+            FINISHED: 3,
+            IN_PROGRESS: -1
+        }
+    },
     init: function() {
         if (Answer.canContinue === true) {
             Answer.getState();
@@ -10,50 +21,63 @@ const Answer = {
         }
     },
     getState: function() {
-        Answer.canContinue = false;
-        axios.get('/?view=getAnswerState')
+        axios.get('/?view=getRoundState&hash=' + Answer.answerHash)
             .then((response) => {
-                Answer.update(response.data);
-                if (response.data.canAnswer) {
-                    Answer.answerHash = response.data.hash;
-                } else {
-                    Answer.isAnswered = false;
+                Answer.roundState = response.data.roundState;
+                Answer.currentAnswerId = response.data.currentAnswer;
+                Answer.update();
+                if (Answer.roundState === Answer.getStates().FINISHED) {
+                    document.location.href = '/?view=team';
+                    return;
                 }
-                Answer.canContinue = true;
                 setTimeout(Answer.init, 1000);
             })
             .catch((err) => {
                 console.error('getState', err);
-                Answer.canContinue = true;
                 setTimeout(Answer.init, 3000);
             });
     },
-    update: (data) => {
-        document.querySelector('.answer-btn-disabled').style = 'display: none;';
-        document.querySelector('.answer-btn-enabled').style = 'display: none;';
-        if (data.canAnswer && Answer.hash !== '') {
-            document.querySelector('.answer-btn-enabled').style = 'display:;';
-        } else {
-            if (Answer.isAnswered) {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Говорите ответ!';
-            } else {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Ждем следующего вопроса';
-            }
-            document.querySelector('.answer-btn-disabled').style = 'display:;';
-        }
-    },
     sendAnswer: function() {
-        const hash = Answer.hash;
-        Answer.hash = '';
+        Answer.roundState = Answer.getStates().IN_PROGRESS;
+        Answer.currentAnswerId = -1;
         Answer.update();
-        axios.get('/?view=sendAnswer&hash=' + hash)
+        axios.get('/?view=sendAnswer&hash=' + Answer.answerHash)
             .then((response) => {
-                Answer.isAnswered = response.data.isAnswered;
+                Answer.myAnswerId = response.data.answerId;
+                Answer.currentAnswerId = response.data.currentAnswerId;
+                Answer.roundState = response.data.roundState;
+                Answer.update();
             })
             .catch((err) => {
-                
+                console.error('sendAnswer', err);
             });
-    }
-}
+    },
+    update: () => {
+        if (Answer.roundState === Answer.getStates().PLAYED) {
+            Answer.canAnswer = true;
+        } else if (Answer.roundState === Answer.getStates().HAS_ANSWER) {
+            Answer.canAnswer = true; // ответы принимаются после первого ответа
+        } else {
+            Answer.canAnswer = false;
+        }
+        if (Answer.canAnswer === true) {
+            document.querySelector('.answer-btn-disabled').style = 'display: none;';
+            document.querySelector('.answer-btn-enabled').style = 'display:;';
+        } else {
+            document.querySelector('.answer-btn-enabled').style = 'display: none;';
+            document.querySelector('.answer-btn-disabled').style = 'display:;';
+            if (Answer.currentAnswerId === Answer.myAnswerId) {
+                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Слушаем ваш ответ!';
+            } else if (Answer.roundState === Answer.getStates().IN_PROGRESS) {
+                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Смотрим, кто первый';
+            } else if (Answer.myAnswerId) {
+                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Вас опередили';
+            } else {
+                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Ответы пока не принимаются';
+            }
+        }
+    },
+
+};
 
 document.addEventListener('DOMContentLoaded', Answer.init);
