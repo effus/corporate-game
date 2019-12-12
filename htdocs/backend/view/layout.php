@@ -18,7 +18,7 @@
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="/frontend/js/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+    <script id="jq" src="/frontend/js/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
     <script src="/frontend/js/popper.min.js" crossorigin="anonymous"></script>
     <script src="/frontend/js/bootstrap.min.js" crossorigin="anonymous"></script>
 </body>

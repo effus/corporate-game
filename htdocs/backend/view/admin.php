@@ -1,10 +1,6 @@
-<main class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+<main class="admin-container d-flex w-100 h-100 p-3 mx-auto flex-column">
 
-<header class="masthead mb-auto">
-    <div class="inner">
-      <h3 class="masthead-brand">Gemotest.Games.Admin</h3>
-    </div>
-</header>
+<? include __DIR__ . '/header.php'; ?>
 
 <main role="main" class="inner cover">
     
@@ -61,8 +57,8 @@
     <div class="col-4" style="overflow: auto; height: 200px;">
       
 <ul class="list-group bg-dark">
-  <li class="list-group-item active">Игра #2</li>
-  <li class="list-group-item bg-dark">Игра #1</li>
+  <li class="list-group-item active">Раунд #2</li>
+  <li class="list-group-item bg-dark">Раунд #1</li>
 </ul>
 
     </div>
@@ -70,7 +66,8 @@
 
     <ul class="list-group">
   <li class="list-group-item">
-    <button class="btn btn-danger">Старт</button>
+    <button class="btn btn-primary btn-sm">Новый раунд</button>
+    <button class="btn btn-danger btn-sm">Старт</button>
   </li>
   <!-- li class="list-group-item">
     <div class="input-group">
@@ -84,8 +81,25 @@
     <span class="badge badge-secondary">ждем ответ</span>
   </li>
   <li class="list-group-item">
-    <button class="btn btn-warning">Продолжить</button>
-    <button class="btn btn-success">Принять</button>
+    
+<div class="input-group mb-3">
+  <div class="input-group-prepend" id="button-addon3">
+    <button class="btn btn-outline-warning btn-sm" type="button">
+      <img src="/frontend/icons/play.svg" width="24" height="24" title="Продолжить"> Продолжить
+    </button>
+  </div>
+  <button class="btn btn-outline-success btn-sm" type="button">
+    <img src="/frontend/icons/check.svg" width="24" height="24" title="Принять"> Да!
+  </button>
+  <div class="input-group-append">
+    <button class="btn btn-outline-dark btn-sm" type="button">
+    <img src="/frontend/icons/x-octagon.svg" width="24" height="24" title="Нет ответа"> Никто не знает
+    </button>
+  </div>
+</div>
+
+<button class="btn btn-dark btn-sm">Рандом</button>
+
   </li>
   
 </ul>
@@ -133,10 +147,6 @@
 
 </main>
 
-<footer class="mastfoot mt-auto">
-    <div class="inner">
-      <p>2019</p>
-    </div>
-  </footer>
+<? include __DIR__ . "/footer.php" ?>
 
 </div>
