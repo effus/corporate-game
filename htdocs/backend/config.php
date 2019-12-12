@@ -6,7 +6,7 @@ class Config {
     private $admin;
 
     public function __construct() {
-        if (!file_exists(__DIR__ . '/config.json')) {
+        if (!file_exists(__DIR__ . '/../data/config.json')) {
             throw new Exception('Config not found');
         }
         $config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
