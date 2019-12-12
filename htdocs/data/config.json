@@ -1,0 +1,13 @@
+{
+  "db": { 
+    "host": "sql202.epizy.com",
+    "name": "epiz_24907197_gemo",
+    "user": "epiz_24907197",
+    "password": "LRMxYvURTxYA"
+  },
+  "domain": "gemotest.rf.gd",
+  "admin": {
+    "lp": "admingemo.123",
+    "hash": "56070e06c1dc804b79c072d34db4c9cd"
+  }
+}
