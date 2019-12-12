@@ -87,10 +87,129 @@ class Db {
         try {
             $statement = $this->connection->query('SELECT count(*) c FROM gamers WHERE game_id = ' . intval($gameId), PDO::FETCH_ASSOC);
             foreach ($statement as $row) {
-                return $row['c'];
+                return intval($row['c']);
             }
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    public function getAllGamersOfGame($gameId)
+    {
+        try {
+            return $this->connection->query('SELECT * FROM gamers WHERE game_id = ' . intval($gameId), PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    /**
+     * @param [type] $gamerId
+     * @return void
+     */
+    public function getGamer($gamerId)
+    {
+        try {
+            $rows = $this->connection->query('
+                SELECT g.*, t.name as team_name, t.scores as team_score, t.name_changed_game
+                FROM gamers g 
+                LEFT JOIN teams t ON t.id = g.team_id
+                WHERE g.id = ' . intval($gamerId), PDO::FETCH_ASSOC);
+            foreach ($rows as $row) {
+                return $row;
+            }
+            
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    /**
+     * создание команды
+     * @param [type] $name
+     * @return void
+     */
+    public function newTeam($name)
+    {
+        try {
+            $stmt = $this->connection->prepare('INSERT INTO teams (`name`, `scores`) VALUES (:name, 0)');
+            $stmt->bindParam(':name', $name);
+            if ($stmt->execute() === false) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+            return $this->connection->lastInsertId();
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при создании команды: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param [type] $gamerId
+     * @param [type] $teamId
+     * @return void
+     */
+    public function setTeamForGamer($teamId, $gamerId)
+    {
+        try {
+            $stmt = $this->connection->prepare('UPDATE gamers SET team_id = :teamId WHERE id = :id');
+            $stmt->bindParam(':teamId', $teamId);
+            $stmt->bindParam(':id', $gamerId);
+            if ($stmt->execute() === false) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при подключении игрока к команде');
+        }
+    }
+
+    /**
+     * @param [type] $gameId
+     * @return void
+     */
+    public function getTeamsCountInGame($gameId)
+    {
+        try {
+            $rows = $this->connection->query('SELECT count(distinct team_id) as c FROM gamers WHERE game_id = ' . intval($gameId), PDO::FETCH_ASSOC);
+            foreach($rows as $row) {
+                return intval($row['c']);
+            }
+            
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    /**
+     * @param [type] $teamId
+     * @return void
+     */
+    public function getTeamMembers($teamId)
+    {
+        try {
+            return $this->connection->query('SELECT * FROM gamers WHERE team_id = ' . intval($teamId), PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    /**
+     * @param [type] $teamId
+     * @param [type] $name
+     * @return void
+     */
+    public function changeTeamName($teamId, $name, $gameId) {
+        try {
+            $stmt = $this->connection->prepare('UPDATE teams SET name = :name, name_changed_game = :gameId WHERE id = :id');
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':gameId', $gameId);
+            $stmt->bindParam(':id', $teamId);
+            if ($stmt->execute() === false) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при создании игры');
         }
     }
     

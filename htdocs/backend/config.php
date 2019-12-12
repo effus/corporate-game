@@ -9,7 +9,7 @@ class Config {
         if (!file_exists(__DIR__ . '/../data/config.json')) {
             throw new Exception('Config not found');
         }
-        $config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
+        $config = json_decode(file_get_contents(__DIR__ . '/../data/config.json'), true);
         $this->db = $config['db'];
         $this->domain = $config['domain'];
         $this->admin = $config['admin'];

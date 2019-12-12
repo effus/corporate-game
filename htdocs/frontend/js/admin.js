@@ -3,8 +3,10 @@ const Admin = {
         id: null,
         state: 0,
         gameType: 1,
-        hasAnswer: null
+        hasAnswer: null,
     },
+    gamers: [],
+    teamsCount: 0,
     canContinue: true,
     init: function() {
         Admin.updateRoundPanelState();
@@ -12,6 +14,24 @@ const Admin = {
             Admin.canContinue = true;
             Admin.checkAnswer();
         }
+        if (!Admin.currentRound.id) {
+            Admin.getGamers();
+        }
+    },
+    getGamers: function() {
+        if (Admin.currentRound.id) {
+            return;
+        }
+        axios.get('/?view=getGamersList')
+            .then((response) => {
+                Admin.gamers = response.data.gamers;
+                Admin.teamsCount = response.data.teamsCount;
+                Admin.updateGamersList();
+                setTimeout(Admin.getGamers, 5000);
+            })
+            .catch((err) => {
+                setTimeout(Admin.getGamers, 5000);
+            });
     },
     checkAnswer: function() {
         if (!Admin.canContinue) {
@@ -25,6 +45,10 @@ const Admin = {
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
                 setTimeout(Admin.checkAnswer, 3000);
             });
+    },
+    updateGamersList: () => {
+        $('#gamersCount').text(Admin.gamers.length);
+        $('#teamsCount').text(Admin.teamsCount);
     },
     updateRoundsList: (rounds) => {
         $('.rounds-list .list-group-item').remove();
@@ -65,6 +89,17 @@ const Admin = {
         axios.get('/?view=newGame&type=' + $('#gameType').val())
             .then((response) => {
                 document.location.reload();
+            })
+            .catch((err) => {
+                console.error('onClickNewGame', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
+    },
+    onClickCreateCommands: () => {
+        const commandCount = $('#commandCount').val();
+        axios.get('/?view=createCommands&count=' + commandCount)
+            .then((response) => {
+                //document.location.reload();
             })
             .catch((err) => {
                 console.error('onClickNewGame', err);

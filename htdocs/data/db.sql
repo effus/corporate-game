@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS `answers`;
+
 CREATE TABLE `answers` (
   `id` int(11) NOT NULL,
   `gamer_id` int(11) NOT NULL,
@@ -13,6 +15,8 @@ ALTER TABLE `answers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ---
+
+DROP TABLE IF EXISTS `gamers`;
 
 CREATE TABLE `gamers` (
   `id` int(11) NOT NULL,
@@ -30,6 +34,8 @@ ALTER TABLE `gamers`
 
 ---
 
+DROP TABLE IF EXISTS `games`;
+
 CREATE TABLE `games` (
   `id` int(11) NOT NULL,
   `type` int(11) NOT NULL DEFAULT '1',
@@ -43,6 +49,8 @@ ALTER TABLE `games`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ---
+
+DROP TABLE IF EXISTS `rounds`;
 
 CREATE TABLE `rounds` (
   `id` int(11) NOT NULL,
@@ -62,10 +70,13 @@ ALTER TABLE `rounds`
 
 ---
 
+DROP TABLE IF EXISTS `teams`;
+
 CREATE TABLE `teams` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `scores` int(11) NOT NULL
+  `scores` int(11) NOT NULL,
+  `name_changed_game` int(11) NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 ALTER TABLE `teams`

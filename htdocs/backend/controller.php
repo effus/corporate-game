@@ -38,7 +38,7 @@ class Controller {
     {
         $game = $this->db->getCurrentGame();
         if (!$game) {
-            throw new Exception('Ни одной игры пока не начали, попробуйте позже');
+            throw new Exception('Ни одной игры пока не начали, зайдите попозже');
         }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $gamer = mb_substr(trim($_POST['gamer']), 0, 100);
@@ -83,16 +83,60 @@ class Controller {
         if (!isset($_SESSION['is_gamer'])) {
             throw new Exception('Вы не зарегистрированы как участник');
         }
+        $game = $this->db->getCurrentGame();
+        if ($game['id'] !== $_SESSION['game']) {
+            die(json_encode([
+                'gamersCount' => 0,
+                'ready' => false,
+                'team' => null
+            ]));    
+        }
         $gamersCount = $this->db->getGamersCountForGame($_SESSION['game']);
         $round = $this->db->getCurrentRound($_SESSION['game']);
+        $gamer = $this->db->getGamer($_SESSION['id']);
         $_SESSION['round'] = null;
         if ($round) {
             $_SESSION['round'] = $round['id'];
         }
+        $members = [];
+        $allowChangeName = false;
+        if ($gamer['team_id']) {
+            $_SESSION['team'] = [
+                'id' => $gamer['team_id'],
+                'name' => $gamer['team_name']
+            ];
+            $memberRows = $this->db->getTeamMembers($gamer['team_id']);
+            foreach($memberRows as $row) {
+                $members[] = $row['name'];
+            }
+            $allowChangeName = intval($gamer['name_changed_game']) !== intval($_SESSION['game']) || intval($gamer['name_changed_game']) === 0;
+        }
         $ready = ($round && $round['state'] === self::ROUND_PLAYED);
         echo json_encode([
             'gamersCount' => $gamersCount,
-            'ready' => $ready
+            'ready' => $ready,
+            'team' => $gamer['team_name'],
+            'members' => $members,
+            'allowChangeName' => $allowChangeName
+        ]);
+    }
+
+    public function actionSetTeamName()
+    {
+        if (!isset($_SESSION['is_gamer'])) {
+            throw new Exception('Вы не зарегистрированы как участник');
+        }
+        $gamer = $this->db->getGamer($_SESSION['id']);
+        if (!$gamer['team_id']) {
+            throw new Exception('Команда пока не назначена');
+        }
+        $teamName = mb_substr(trim($_GET['name']),0,50);
+        if (!$teamName) {
+            throw new Exception('Неподходящее имя');
+        }
+        $this->db->changeTeamName($gamer['team_id'], $teamName, $gamer['game_id']);
+        echo json_encode([
+            'result' => true
         ]);
     }
     
@@ -229,6 +273,57 @@ class Controller {
             'result' => $gameId
         ]);
     }
+
+    /*
+     * подключившиеся к игре юзеры
+     */
+    public function actionGetGamersList()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $currentGame = $this->db->getCurrentGame();
+        $result = [];
+        $teamsCount = $this->db->getTeamsCountInGame($currentGame['id']);
+        if ($currentGame) {
+            $gamers = $this->db->getAllGamersOfGame($currentGame['id']);
+            foreach($gamers as $gamer) {
+                $result[] = $gamer['name'];
+            }
+        }
+        echo json_encode([
+            'gamers' => $result,
+            'teamsCount' => $teamsCount
+        ]);
+    }
+
+    public function actionCreateCommands()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $commandCount = $_GET['count'] ?? 2;
+        if ($commandCount < 2) {
+            throw new Exception('Такое число команд невозможно');
+        }
+        $currentGame = $this->db->getCurrentGame();
+        $gamersRows = $this->db->getAllGamersOfGame($currentGame['id']);
+        $gamerIds = [];
+        foreach($gamersRows as $row) {
+            $gamerIds[] = $row['id'];
+        }
+        shuffle($gamerIds);
+        $chunked = array_chunk($gamerIds, ceil(count($gamerIds) / $commandCount));
+        foreach($chunked as $chunk) {
+            $teamId = $this->db->newTeam($this->getRandomTeamName());
+            foreach($chunk as $gamerId) {
+                $this->db->setTeamForGamer($teamId, $gamerId);
+            }
+        }
+        echo json_encode([
+            'result' => true
+        ]);
+    }
     
     /**
      * создание раунда в админке
@@ -351,5 +446,12 @@ class Controller {
     private function getCurrentRoundHash()
     {
         return md5($_SESSION['round'] . $_SESSION['id']);
+    }
+
+    private function getRandomTeamName() 
+    {
+        $firstWords = ['Серые', 'Зеленые', 'Красные', 'Черные', 'Оранжевые', 'Синие', 'Розовые', 'Белые', 'Желтые', 'Полосатые', 'Пятнистые'];
+        $lastWords = ['Зайцы', 'Волки', 'Медведи', 'Ежи', 'Косули', 'Бобры', 'Суслики', 'Еноты', 'Белки', 'Чайки', 'Кошки', 'Совы', 'Утки', 'Моржи'];
+        return $firstWords[rand(0, count($firstWords) - 1)] . ' ' . $lastWords[rand(0, count($lastWords)-1)];
     }
 }

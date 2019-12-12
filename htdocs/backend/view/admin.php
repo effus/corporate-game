@@ -40,14 +40,26 @@
                                         <? endforeach; ?>
                                     </ul>
                                 </div>
-                                <div class="col-3">
+                                <div class="col">
                                     <button class="btn btn-danger btn-lg" onclick="Admin.onClickNewGame()">Новая игра</button>
                                 </div>
-                                <div class="col-3">
+                                <div class="col">
                                     <select id="gameType" class="form-control">
                                         <option value="1">Кто быстрее ответит</option>
                                         <option value="2">Рандом</option>
                                     </select>
+                                </div>
+                                <div class="col">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" placeholder="Количество комманд" value="2" id="commandCount">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" onclick="Admin.onClickCreateCommands()">Создать команды</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div><span class="badge badge-secondary" id="gamersCount">0</span> игроков</div>
+                                    <div><span class="badge badge-secondary" id="teamsCount">0</span> команд</div>
                                 </div>
                             </div>
                         </div>
