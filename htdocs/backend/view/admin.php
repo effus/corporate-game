@@ -60,6 +60,7 @@
                                 <div class="col">
                                     <div><span class="badge badge-secondary" id="gamersCount">0</span> игроков</div>
                                     <div><span class="badge badge-secondary" id="teamsCount">0</span> команд</div>
+                                    <div><button type="button" onclick="Admin.getGamers()">Get counts</button></div>
                                 </div>
                             </div>
                         </div>
@@ -91,7 +92,7 @@
                                             <li class="list-group-item <?= (!$round['finished_at']) ? 'active' : '' ?>">
                                                 Раунд #<?= $round['id'] ?></li>
                                         <? endforeach; ?>
-                                    </ul>
+                                    </ul> 
 
                                 </div>
                                 <div class="col-8">
@@ -101,6 +102,7 @@
                                             <button class="btn btn-primary btn-sm" onclick="Admin.onClickNewRound()">
                                                 Новый раунд
                                             </button>
+                                            <button class="btn btn-secondary btn-sm" onclick="Admin.checkAnswer()">Проверить</button>
                                         </li>
                                         <!-- li class="list-group-item">
                                           <div class="input-group">
@@ -119,7 +121,7 @@
                                                 <img src="/frontend/icons/check.svg" width="24" height="24"
                                                      title="Принять"> Правильно!
                                             </button>
-                                            <button id="continueRound" class="btn btn-warning btn-sm flex-fill" type="button" onclick="Admin.onClickContinueAnswer()">
+                                            <button id="continueRound" class="btn btn-warning btn-sm flex-fill" type="button" onclick="Admin.onClickDenyAnswer()">
                                                 <img src="/frontend/icons/play.svg" width="24" height="24"
                                                      title="Продолжить"> Продолжить раунд
                                             </button>
@@ -151,23 +153,17 @@
                 </div>
                 <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
                     <div class="card-body bg-dark">
-
-                        <ul class="list-group">
-                            <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
-                                Команда 1
-                                <span class="badge badge-primary badge-pill">14</span>
-                            </li>
-                            <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
-                                Команда 2
-                                <span class="badge badge-primary badge-pill">2</span>
-                            </li>
-                            <li class="list-group-item bg-dark d-flex justify-content-between align-items-center">
-                                Команда 3
-                                <span class="badge badge-primary badge-pill">1</span>
-                                <a href="#" class="btn btn-sm btn-warning">X</a>
-                            </li>
-                        </ul>
-
+                        <div class="row">
+                            <div class="col col-2">
+                                <button type="button" class="btn btn-dark btn-sm" onclick="Admin.onClickRefreshTeamList()">Refresh</button>
+                            </div>
+                            <div class="col">
+                                <div class="list-group" id="teamlist"></div>
+                            </div>
+                            <div class="col">
+                                <ul class="list-group" id="teamgamers"></ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

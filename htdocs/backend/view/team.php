@@ -23,7 +23,7 @@
       <li class="list-group-item bg-dark">Cras justo odio</li>
     </ul>
 
-    <p class="mt-5">Ждем первого раунда</p>
+    <p class="mt-5">Ждем начала раунда</p>
 
     <div class="row mt-5" id="teamNameForm" style="display:none;">
       <div class="col">

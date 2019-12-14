@@ -57,8 +57,7 @@ CREATE TABLE `rounds` (
   `game_id` int(11) NOT NULL,
   `state` int(11) NOT NULL DEFAULT '1',
   `current_answer_id` int(11) DEFAULT NULL,
-  `winner_team` int(11) DEFAULT NULL,
-  `winner_user` int(11) DEFAULT NULL,
+  `winner_id` int(11) DEFAULT NULL,
   `finished_at` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

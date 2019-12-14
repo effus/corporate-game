@@ -176,7 +176,21 @@ class Db {
             }
             
         } catch (Exception $e) {
-            throw new Exception('Ошибка при получении списка игроков');
+            throw new Exception('Ошибка при получении количества команд');
+        }
+    }
+
+    public function getTeams($gameId)
+    {
+        try {
+            return $this->connection->query('SELECT t.*, g.id as gamer_id, g.name as gamer_name, g.scores as gamer_scores
+                FROM teams t
+                INNER JOIN gamers g ON g.team_id = t.id
+                WHERE g.game_id = ' . intval($gameId) . '
+                ORDER BY t.id, g.id', PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка команд');
         }
     }
 
@@ -253,7 +267,7 @@ class Db {
     public function newRound($gameId)
     {
         try {
-            $this->connection->prepare('UPDATE rounds SET finished_at = NOW(), state = 10 WHERE finished_at IS NULL')->execute();
+            $this->connection->prepare('UPDATE rounds SET finished_at = NOW(), state = 3 WHERE finished_at IS NULL')->execute();
             $stmt = $this->connection->prepare('INSERT INTO rounds (`game_id`, `state`) VALUES (' . intval($gameId) . ', 0)');
             if ($stmt->execute() === false) {
                 throw new Exception(json_encode($stmt->errorInfo()));
@@ -299,6 +313,62 @@ class Db {
             throw new Exception('Ошибка при получении раунда');
         }
     }
+
+    /**
+     * @param [type] $roundId
+     * @return void
+     */
+    public function applyCurrentAnswer($roundId)
+    {
+        try {        
+            return $this->connection->prepare('
+            UPDATE rounds r
+            INNER JOIN answers a ON a.id = r.current_answer_id
+            INNER JOIN gamers g ON g.id = a.gamer_id
+            INNER JOIN teams t ON t.id = g.team_id
+            SET 
+                r.state = 3,
+                r.finished_at = NOW(),
+                r.winner_id = a.gamer_id,
+                a.flag_correct = 1,
+                g.scores = g.scores + 1,
+                t.scores = t.scores + 1
+
+            WHERE 
+                r.finished_at IS NULL
+            ')->execute();
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при аппруве ответа');
+        }
+    }
+
+    /**
+     * @param [type] $roundId
+     * @return void
+     */
+    public function denyCurrentAnswer($roundId)
+    {
+        try {        
+            $stmt = $this->connection->prepare('
+            UPDATE rounds r
+            INNER JOIN answers a ON a.id = r.current_answer_id
+            INNER JOIN gamers g ON g.id = a.gamer_id
+            INNER JOIN teams t ON t.id = g.team_id
+            SET 
+                r.state = 1,
+                r.current_answer_id = NULL
+            WHERE 
+                r.finished_at IS NULL
+            ');
+            if (!$stmt->execute()) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+            return true;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при отклонении ответа');
+        }
+    }
+    
     
     /**
      * @param $gamerId
@@ -316,26 +386,24 @@ class Db {
             if ($stmt->execute() === false) {
                 throw new Exception(json_encode($stmt->errorInfo()));
             }
-            $answerId = intval($this->connection->lastInsertId());
-           
-            $stmt = $this->connection->prepare('UPDATE rounds SET current_answer_id = :answer, state = 2 WHERE current_answer_id IS NULL AND id = :round_id');
+            $answerId = intval($this->connection->lastInsertId());           
+            $stmt = $this->connection->prepare('UPDATE rounds SET current_answer_id = :answer, state = 2 WHERE current_answer_id IS NULL AND state = 1 AND id = :round_id');
             $stmt->bindParam(':answer', $answerId);
+            $stmt->bindParam(':round_id', $roundId);
             if ($stmt->execute() === false) {
                 throw new Exception(json_encode($stmt->errorInfo()));
             }
             $this->connection->commit();
-            
             $currentRound = $this->getRound($roundId);
-            
             return [
-                'answer_id' => $answerId,
-                'round_state' => $currentRound['state'],
-                'current_answer_id' => $currentRound['current_answer_id'],
+                'answer_id' => intval($answerId),
+                'round_state' => intval($currentRound['state']),
+                'current_answer_id' => intval($currentRound['current_answer_id']),
             ];
             
         } catch (Exception $e) {
             $this->connection->rollBack();
-            throw new Exception('Ошибка при запуске раунда');
+            throw new Exception('Ошибка при добавлении ответа ' . $e->getMessage());
         }
     }
     
@@ -348,7 +416,11 @@ class Db {
     {
         try {
             $rows = $this->connection->query('
-                SELECT a.id, r.id as round_id, g.id as gamer_id, g.name as gamer_name, t.id as team_id, t.name as team_name
+                SELECT 
+                    a.id, 
+                    r.id as round_id, 
+                    g.id as gamer_id, g.name as gamer_name, 
+                    t.id as team_id, t.name as team_name
                 FROM answers a
                 INNER JOIN rounds r ON r.current_answer_id = a.id
                 INNER JOIN gamers g ON g.id = a.gamer_id
@@ -358,7 +430,51 @@ class Db {
                 return $row;
             }
         } catch (Exception $e) {
-            throw new Exception('Ошибка при получении списка раундов');
+            throw new Exception('Ошибка при получении ответа на данный раунд');
+        }
+    }
+
+    /**
+     * @param [type] $roundId
+     * @param [type] $gamerId
+     * @return void
+     */
+    public function getGamerAnswer($roundId, $gamerId)
+    {
+        try {
+            $rows = $this->connection->query('
+            SELECT *
+            FROM answers a
+            WHERE a.round_id = ' . intval($roundId) . ' AND a.gamer_id = ' . intval($gamerId), PDO::FETCH_ASSOC);
+        foreach($rows as $row) {
+            return $row;
+        }
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении ответа пользователя');
+        }
+    }
+
+    /**
+     * @param [type] $roundId
+     * @return void
+     */
+    public function setNoAnswerInRound($roundId)
+    {
+        try {        
+            $stmt = $this->connection->prepare('
+            UPDATE rounds
+            SET 
+                state = 3,
+                current_answer_id = NULL
+            WHERE 
+                finished_at IS NULL
+            ');
+            if (!$stmt->execute()) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+            return true;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при завершении раунда без ответа');
         }
     }
 }

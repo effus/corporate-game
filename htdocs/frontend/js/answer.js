@@ -5,6 +5,7 @@ const Answer = {
     currentAnswerId: null,
     canAnswer: false,
     myAnswerId: null,
+    isBtnPressed: false,
     getStates: () => {
         return {
             PLAYED: 1,
@@ -14,7 +15,7 @@ const Answer = {
         }
     },
     init: function() {
-        if (Answer.canContinue === true) {
+        if (!Answer.isBtnPressed) {
             Answer.getState();
         } else {
             setTimeout(Answer.init, 1000);
@@ -27,7 +28,9 @@ const Answer = {
                 Answer.currentAnswerId = response.data.currentAnswer;
                 Answer.update();
                 if (Answer.roundState === Answer.getStates().FINISHED) {
-                    document.location.href = '/?view=team';
+                    setTimeout(() => {
+                        document.location.href = '/?view=team';
+                    }, 3000);
                     return;
                 }
                 setTimeout(Answer.init, 1000);
@@ -47,37 +50,55 @@ const Answer = {
                 Answer.currentAnswerId = response.data.currentAnswerId;
                 Answer.roundState = response.data.roundState;
                 Answer.update();
+
             })
             .catch((err) => {
                 console.error('sendAnswer', err);
             });
     },
     update: () => {
+        console.debug('up', Answer.roundState, Answer.getStates().PLAYED, Answer.roundState === Answer.getStates().PLAYED);
         if (Answer.roundState === Answer.getStates().PLAYED) {
-            Answer.canAnswer = true;
-        } else if (Answer.roundState === Answer.getStates().HAS_ANSWER) {
-            Answer.canAnswer = true; // ответы принимаются после первого ответа
-        } else {
-            Answer.canAnswer = false;
-        }
-        if (Answer.canAnswer === true) {
-            document.querySelector('.answer-btn-disabled').style = 'display: none;';
-            document.querySelector('.answer-btn-enabled').style = 'display:;';
-        } else {
-            document.querySelector('.answer-btn-enabled').style = 'display: none;';
-            document.querySelector('.answer-btn-disabled').style = 'display:;';
-            if (Answer.currentAnswerId === Answer.myAnswerId) {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Слушаем ваш ответ!';
-            } else if (Answer.roundState === Answer.getStates().IN_PROGRESS) {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Смотрим, кто первый';
-            } else if (Answer.myAnswerId) {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Вас опередили';
+            if (Answer.myAnswerId) {
+                Answer.setAnswerDisabled();
+                Answer.setComment('Ждем следующего раунда');
             } else {
-                document.querySelector('.answer-btn-disabled .comment').innerHTML = 'Ответы пока не принимаются';
+                Answer.setAnswerEnabled();
+                Answer.setComment('Можно отвечать');
             }
+        } else if (Answer.roundState === Answer.getStates().IN_PROGRESS) {
+            Answer.setAnswerDisabled()
+            Answer.setComment('Отправка сигнала');
+        } else if (Answer.roundState === Answer.getStates().HAS_ANSWER) {
+            if (Answer.currentAnswerId === Answer.myAnswerId) {
+                Answer.setComment('Ваш ответ!');
+                Answer.setAnswerDisabled();
+            } else {
+                Answer.setComment('Кто-то ответил быстрее');
+                Answer.setAnswerEnabled();
+            }
+        } else if (Answer.roundState === Answer.getStates().FINISHED) {
+            Answer.setAnswerDisabled();
+            Answer.setComment('Раунд завершен');
+        } else {
+            Answer.setComment('Ждем продолжения');
+            Answer.setAnswerDisabled();
         }
     },
-
+    setAnswerEnabled: () => {
+        $('#btn-enabled').show();
+        $('#btn-disabled').hide();
+    },
+    setAnswerDisabled: () => {
+        $('#btn-enabled').hide();
+        $('#btn-disabled').show();
+    },
+    setComment: (text) => {
+        $('.comment').text(text);
+    },
+    onClickAnswer: () => {
+        Answer.sendAnswer();
+    }
 };
 
 document.addEventListener('DOMContentLoaded', Answer.init);

@@ -16,20 +16,18 @@ button {
 
 <main role="main" class="inner cover">
 <div class="row">
-    <div class="col answer-btn-enabled" style="display: none;">
-        <p>Можно отвечать!</p>
-        <p>
-            <button class="btn btn-success btn-lg answer-btn" onclick="Answer.sendAnswer()">Ответ</button>
-        </p>
-    </div>
-    <div class="col answer-btn-disabled">
-        <p class="comment">Ждем следующего вопроса</p>
-        <p>
-            <button class="btn btn-secondary btn-lg answer-btn" disabled>Ответ</button>
-        </p>
+    <div id="comment" class="col">
+        <p class="comment">%comment%</p>
     </div>
 </div>
-
+<div class="row">
+    <div class="col" id="btn-disabled" style="display: none;">
+        <button class="btn btn-secondary btn-lg answer-btn" disabled>Ответ</button>
+    </div>
+    <div class="col" id="btn-enabled" style="display: none;">
+        <button class="btn btn-secondary btn-lg answer-btn" onclick="Answer.onClickAnswer()">Ответ</button>
+    </div>
+</div>
 
 </main>
 
@@ -42,4 +40,6 @@ button {
 
 <script>
     Answer.answerHash = '<?=$answerHash?>';
+    Answer.currentAnswerId = <?=$answer ? intval($answer['id']) : 'null'?>;
+    Answer.myAnswerId = <?=$myAnswer ? intval($myAnswer['id']) : 'null'?>;
 </script>

@@ -151,6 +151,8 @@ class Controller {
             die();
         }
         $view = 'answer';
+        $answer = $this->db->getCurrentAnswer($round['id']);
+        $myAnswer = $this->db->getGamerAnswer($round['id'], $_SESSION['id']);
         $answerHash = $this->getCurrentRoundHash();
         include __DIR__ . "/view/layout.php";
     }
@@ -173,15 +175,17 @@ class Controller {
         }
         $hash = $this->getCurrentRoundHash();
         $roundState = null;
+        $roundAnswer = null;
         if ($_GET['hash'] !== $hash) {
             $roundState = self::ROUND_FINISHED;
         } else {
             $round = $this->db->getRound($_SESSION['round']);
             $roundState = intval($round['state']);
+            $roundAnswer = intval($round['current_answer_id']);
         }
         echo json_encode([
             'roundState' => $roundState,
-            'currentAnswer' => $round['current_answer_id'],
+            'currentAnswer' => $roundAnswer,
             'hash' => $hash,
         ]);
     }
@@ -383,6 +387,7 @@ class Controller {
         if (!$roundId) {
             throw new Exception('Не передан раунд');
         }
+        $round = $this->db->getRound($roundId);
         $firstAnswer = $this->db->getCurrentAnswer($roundId);
         $answer = null;
         if ($firstAnswer) {
@@ -397,7 +402,109 @@ class Controller {
         }
         echo json_encode([
             'result' => true,
+            'roundState' => intval($round['state']),
             'answer' => $answer
+        ]);
+    }
+
+    /**
+     * ответ корректен
+     * @return void
+     */
+    public function actionAdminApplyCurrentAnswer() 
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            throw new Exception('Не начата игра');
+        }
+        $round = $this->db->getCurrentRound($game['id']);
+        if (!$round) {
+            throw new Exception('Не начат раунд');
+        }
+        $this->db->applyCurrentAnswer($round['id']);
+        echo json_encode([
+            'result' => true
+        ]);
+    }
+
+    /**
+     * ответ не корректен
+     * @return void
+     */
+    public function actionAdminDenyCurrentAnswer()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            throw new Exception('Не начата игра');
+        }
+        $round = $this->db->getCurrentRound($game['id']);
+        if (!$round) {
+            throw new Exception('Не начат раунд');
+        }
+        echo json_encode([
+            'result' => $this->db->denyCurrentAnswer($round['id'])
+        ]);
+    }
+    
+    /**
+     * нет ответа
+     * @return void
+     */
+    public function actionAdminNoAnswerInRound()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            throw new Exception('Не начата игра');
+        }
+        $round = $this->db->getCurrentRound($game['id']);
+        if (!$round) {
+            throw new Exception('Не начат раунд');
+        }
+        echo json_encode([
+            'result' => $this->db->setNoAnswerInRound($round['id'])
+        ]);
+    }
+    
+    /*
+    * список команд в игре
+    */ 
+    public function actionGetTeamList() 
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            throw new Exception('Не начата игра');
+        }
+        $teamList = $this->db->getTeams($game['id']);
+        $result = [];
+        $team = [];
+        foreach($teamList as $row) {
+            if (!$result[$row['id']]) {
+                $result[$row['id']] = [
+                    'name' => $row['name'],
+                    'scores' => $row['scores'],
+                    'members' => []
+                ];
+            }
+            $result[$row['id']]['members'][] = [
+                'id' => $row['gamer_id'],
+                'name' => $row['gamer_name'],
+                'scores' => $row['gamer_scores']
+            ];
+        }
+        echo json_encode([
+            'result' => $result
         ]);
     }
 

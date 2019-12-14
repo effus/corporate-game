@@ -3,20 +3,23 @@ const Admin = {
         id: null,
         state: 0,
         gameType: 1,
-        hasAnswer: null,
+        answer: {},
+        checking: false
     },
     gamers: [],
     teamsCount: 0,
+    teams: [],
     canContinue: true,
     init: function() {
         Admin.updateRoundPanelState();
-        if (Admin.currentRound.state === 1) {
+        if (Admin.currentRound.state === 1 || Admin.currentRound.state === 2) {
             Admin.canContinue = true;
             Admin.checkAnswer();
         }
         if (!Admin.currentRound.id) {
             Admin.getGamers();
         }
+        Admin.onClickRefreshTeamList();
     },
     getGamers: function() {
         if (Admin.currentRound.id) {
@@ -27,18 +30,21 @@ const Admin = {
                 Admin.gamers = response.data.gamers;
                 Admin.teamsCount = response.data.teamsCount;
                 Admin.updateGamersList();
-                setTimeout(Admin.getGamers, 5000);
             })
             .catch((err) => {
-                setTimeout(Admin.getGamers, 5000);
+                console.debug('err', err);
             });
     },
     checkAnswer: function() {
         if (!Admin.canContinue) {
             return;
         }
+        Admin.currentRound.checking = true;
         axios.get('/?view=getAdminCheckAnswer&round_id=' + Admin.currentRound.id)
             .then((response) => {
+                Admin.currentRound.state = response.data.roundState;
+                Admin.currentRound.answer = response.data.answer;
+                Admin.updateRoundPanelState();
                 setTimeout(Admin.checkAnswer, 1000);
             })
             .catch((err) => {
@@ -70,17 +76,46 @@ const Admin = {
                 $('#startRound').show();
             } else if (Admin.currentRound.state === 1) {
                 Admin.setRoundStateLabel('Ждем ответа');
-                if (Admin.currentRound.hasAnswer) {
-                    $('#continueRound').show();
-                    $('#commitAnswer').show();
-                } else {
-                    $('#noOne').show();
+                $('#noOne').show();
+            } else if (Admin.currentRound.state === 2) {
+                if (Admin.currentRound.answer) {
+                    Admin.setRoundStateLabel('Ответил: ' + Admin.currentRound.answer.gamer_name + ' / ' + Admin.currentRound.answer.team_name);
                 }
+                $('#continueRound').show();
+                $('#commitAnswer').show();
+            } else if (Admin.currentRound.state === 3) {
+                if (Admin.currentRound.answer.gamer_name) {
+                    Admin.setRoundStateLabel('Правильный ответ: ' + Admin.currentRound.answer.gamer_name + ' / ' + Admin.currentRound.answer.team_name);
+                } else {
+                    Admin.setRoundStateLabel('Раунд завершен без ответа');
+                }
+                $('#continueRound').hide();
+                $('#commitAnswer').hide();
+                $('#noOne').hide();
             }
         } else {
             Admin.setRoundStateLabel('Запустите рандомайзер');
             $('#startRandom').show();
         }
+    },
+    updateTeamsList: () => {
+        let html = '';
+        for(let i in Admin.teams) {
+            html += '<a href="javascript:" class="list-group-item list-group-item-action" data-team-id="' + i + '">' + Admin.teams[i].name 
+            + ' <span class="badge badge-primary badge-pill">' + Admin.teams[i].scores + '</span></a>';
+        }
+        $('#teamlist').append(html);
+        $('#teamlist a').click(Admin.onClickGetTeamMembers);
+    },
+    updateTeamMembers: (teamId) => {
+        $('#teamgamers li').remove();
+        let html = '';
+        for(let i in Admin.teams[teamId].members) {
+            html += '<li class="list-group-item bg-dark d-flex justify-content-between align-items-center">' + 
+                Admin.teams[teamId].members[i].name + ' <span class="badge badge-primary badge-pill">' + 
+                Admin.teams[teamId].members[i].scores + '</span></li>';
+        }
+        $('#teamgamers').append(html);
     },
     setRoundStateLabel: (label) => {
         $('#currentState').text(label);
@@ -133,16 +168,54 @@ const Admin = {
             });
     },
     onClickCommitAnswer: () => {
-
+        Admin.canContinue = false;
+        axios.get('/?view=adminApplyCurrentAnswer')
+            .then((response) => {
+                Admin.currentRound.state = 3;
+                Admin.updateRoundPanelState();
+            })
+            .catch((err) => {
+                console.error('onClickCommitAnswer', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
     },
-    onClickContinueAnswer: () => {
-
+    onClickDenyAnswer: () => {
+        axios.get('/?view=adminDenyCurrentAnswer')
+            .then((response) => {
+                Admin.currentRound.answer = {};
+            })
+            .catch((err) => {
+                console.error('onClickContinueAnswer', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
     },
     onClickNoAnswer: () => {
-
+        Admin.canContinue = false;
+        axios.get('/?view=adminNoAnswerInRound')
+            .then((response) => {
+                Admin.currentRound.answer = {};
+            })
+            .catch((err) => {
+                console.error('onClickContinueAnswer', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
     },
     onClickRandom: () => {
 
+    },
+    onClickRefreshTeamList: () => {
+        $('#teamlist a').remove();
+        axios.get('/?view=getTeamList')
+            .then((response) => {
+                Admin.teams = response.data.result;
+                Admin.updateTeamsList();
+            })
+            .catch((err) => {
+                console.debug('err', err);
+            });
+    },
+    onClickGetTeamMembers: (event) => {
+        Admin.updateTeamMembers($(event.target).data('team-id'));
     }
 };
 
