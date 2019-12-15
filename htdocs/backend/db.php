@@ -45,13 +45,23 @@ class Db {
     public function newGame($type = 1)
     {
         try {
-            $this->connection->prepare('UPDATE rounds SET finished_at = NOW(), state = 10 WHERE finished_at IS NULL')->execute();
-            $this->connection->prepare('UPDATE games SET finished_at = NOW() WHERE finished_at IS NULL')->execute();
+            $this->endCurrentGame();
             $stmt = $this->connection->prepare('INSERT INTO games (`type`) VALUES (' . intval($type) . ')');
             if ($stmt->execute() === false) {
                 throw new Exception(json_encode($stmt->errorInfo()));
             }
             return $this->connection->lastInsertId();
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при создании игры');
+        }
+    }
+
+    public function endCurrentGame()
+    {
+        try {
+            $this->connection->prepare('UPDATE rounds SET finished_at = NOW(), state = 3 WHERE finished_at IS NULL')->execute();
+            $this->connection->prepare('UPDATE games SET finished_at = NOW() WHERE finished_at IS NULL')->execute();
+            return true;
         } catch (Exception $e) {
             throw new Exception('Ошибка при создании игры');
         }
@@ -74,6 +84,25 @@ class Db {
             return $this->connection->lastInsertId();
         } catch (Exception $e) {
             throw new Exception('Ошибка при регистрации пользователя');
+        }
+    }
+
+    /**
+     * @param [type] $gameId
+     * @param [type] $gamerId
+     * @return void
+     */
+    public function connectGamer($gameId, $gamerId) {
+        try {
+            $stmt = $this->connection->prepare('UPDATE gamers SET game_id = :game_id, team_id = NULL WHERE id = :id');
+            $stmt->bindParam(':game_id', $gameId);
+            $stmt->bindParam(':id', $gamerId);
+            if ($stmt->execute() === false) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+            return true;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при подключении пользователя к игре');
         }
     }
     
@@ -184,8 +213,8 @@ class Db {
     {
         try {
             return $this->connection->query('SELECT t.*, g.id as gamer_id, g.name as gamer_name, g.scores as gamer_scores
-                FROM teams t
-                INNER JOIN gamers g ON g.team_id = t.id
+                FROM gamers g 
+                LEFT JOIN teams t ON g.team_id = t.id
                 WHERE g.game_id = ' . intval($gameId) . '
                 ORDER BY t.id, g.id', PDO::FETCH_ASSOC);
             
@@ -253,7 +282,12 @@ class Db {
     public function getAllRounds($gameId)
     {
         try {
-            return $this->connection->query('SELECT * FROM rounds WHERE game_id = ' . intval($gameId) . ' ORDER BY id DESC', PDO::FETCH_ASSOC);
+            $rows = $this->connection->query('SELECT * FROM rounds WHERE game_id = ' . intval($gameId) . ' ORDER BY id DESC', PDO::FETCH_ASSOC);
+            $result = [];
+            foreach($rows as $row) {
+                $result[] = $row;
+            }
+            return $result;
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении списка раундов');
         }
@@ -325,7 +359,7 @@ class Db {
             UPDATE rounds r
             INNER JOIN answers a ON a.id = r.current_answer_id
             INNER JOIN gamers g ON g.id = a.gamer_id
-            INNER JOIN teams t ON t.id = g.team_id
+            LEFT JOIN teams t ON t.id = g.team_id
             SET 
                 r.state = 3,
                 r.finished_at = NOW(),
@@ -351,9 +385,6 @@ class Db {
         try {        
             $stmt = $this->connection->prepare('
             UPDATE rounds r
-            INNER JOIN answers a ON a.id = r.current_answer_id
-            INNER JOIN gamers g ON g.id = a.gamer_id
-            INNER JOIN teams t ON t.id = g.team_id
             SET 
                 r.state = 1,
                 r.current_answer_id = NULL
@@ -424,7 +455,7 @@ class Db {
                 FROM answers a
                 INNER JOIN rounds r ON r.current_answer_id = a.id
                 INNER JOIN gamers g ON g.id = a.gamer_id
-                INNER JOIN teams t ON t.id = g.team_id
+                LEFT JOIN teams t ON t.id = g.team_id
                 WHERE r.id = ' . intval($roundId), PDO::FETCH_ASSOC);
             foreach($rows as $row) {
                 return $row;

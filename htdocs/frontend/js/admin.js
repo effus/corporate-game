@@ -72,20 +72,22 @@ const Admin = {
         }
         if (Admin.currentRound.gameType === 1) {
             if (Admin.currentRound.state === 0) {
-                Admin.setRoundStateLabel('Начните раунд');
+                Admin.setRoundStateLabel('Начните раунд, после чего можете задавать вопрос');
                 $('#startRound').show();
             } else if (Admin.currentRound.state === 1) {
                 Admin.setRoundStateLabel('Ждем ответа');
                 $('#noOne').show();
             } else if (Admin.currentRound.state === 2) {
                 if (Admin.currentRound.answer) {
-                    Admin.setRoundStateLabel('Ответил: ' + Admin.currentRound.answer.gamer_name + ' / ' + Admin.currentRound.answer.team_name);
+                    Admin.setRoundStateLabel('Ответил: ' + Admin.currentRound.answer.gamer_name + (Admin.currentRound.answer.team_name ? ' / ' + Admin.currentRound.answer.team_name : ''));
+                } else {
+                    Admin.setRoundStateLabel('Кто-то ответил');
                 }
                 $('#continueRound').show();
                 $('#commitAnswer').show();
             } else if (Admin.currentRound.state === 3) {
-                if (Admin.currentRound.answer.gamer_name) {
-                    Admin.setRoundStateLabel('Правильный ответ: ' + Admin.currentRound.answer.gamer_name + ' / ' + Admin.currentRound.answer.team_name);
+                if (Admin.currentRound.answer && Admin.currentRound.answer.gamer_name) {
+                    Admin.setRoundStateLabel('Правильный ответ: ' + Admin.currentRound.answer.gamer_name + (Admin.currentRound.answer.team_name ? ' / ' + Admin.currentRound.answer.team_name : ''));
                 } else {
                     Admin.setRoundStateLabel('Раунд завершен без ответа');
                 }
@@ -167,11 +169,10 @@ const Admin = {
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
             });
     },
-    onClickCommitAnswer: () => {
-        Admin.canContinue = false;
+    onClickApplyAnswer: () => {
+        console.debug('apply!');
         axios.get('/?view=adminApplyCurrentAnswer')
             .then((response) => {
-                Admin.currentRound.state = 3;
                 Admin.updateRoundPanelState();
             })
             .catch((err) => {
@@ -190,13 +191,25 @@ const Admin = {
             });
     },
     onClickNoAnswer: () => {
-        Admin.canContinue = false;
         axios.get('/?view=adminNoAnswerInRound')
             .then((response) => {
                 Admin.currentRound.answer = {};
             })
             .catch((err) => {
                 console.error('onClickContinueAnswer', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
+    },
+    onClickEndGame: () => {
+        Admin.canContinue = false;
+        axios.get('/?view=adminEndCurrentGame')
+            .then((response) => {
+                Admin.currentRound.id = null;
+                Admin.currentRound.state = 0;
+                
+            })
+            .catch((err) => {
+                console.error('onClickEndGame', err);
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
             });
     },

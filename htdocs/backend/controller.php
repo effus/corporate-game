@@ -31,25 +31,36 @@ class Controller {
             $this->error = $e;
             $this->actionError();
         }
-        
     }
 
     public function actionMain()
     {
         $game = $this->db->getCurrentGame();
-        if (!$game) {
-            throw new Exception('Ни одной игры пока не начали, зайдите попозже');
-        }
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $gamer = mb_substr(trim($_POST['gamer']), 0, 100);
-            $userId = $this->db->registerGamer($gamer, $game['id']);
-            $_SESSION['is_gamer'] = true;
-            $_SESSION['id'] = $userId;
-            $_SESSION['team'] = null;
-            $_SESSION['game'] = $game['id'];
-            header('Location: /?view=team');
-            return;
-            
+        if ($game) {
+
+            $rounds = $this->db->getAllRounds($game['id']);
+            if (count($rounds) > 0) {
+                throw new Exception('Игра уже началась, дождитесь следующей');
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if ($_GET['action'] === 'new') {
+                    $gamer = mb_substr(trim($_POST['gamer']), 0, 100);
+                    $userId = $this->db->registerGamer($gamer, $game['id']);
+                    $_SESSION['is_gamer'] = true;
+                    $_SESSION['id'] = $userId;
+                    $_SESSION['name'] = $gamer;
+                    $_SESSION['team'] = null;
+                    $_SESSION['game'] = $game['id'];
+                    
+                } else if ($_GET['action'] === 'connect') {
+                    $this->db->connectGamer($game['id'], $_SESSION['id']);
+                    $_SESSION['game'] = $game['id'];
+                }
+
+                header('Location: /?view=team');
+                return;   
+            }
         }
         $view = 'main';
         include __DIR__ . "/view/layout.php";
@@ -70,6 +81,19 @@ class Controller {
             die();
         }
         $_SESSION['game'] = $game['id'];
+        $rounds = $this->db->getAllRounds($game['id']);
+        $lastRound = null;
+        $lastWinner = null;
+        if (count($rounds) > 0) {
+            $lastRound = reset($rounds);
+            if ($lastRound['winner_id']) {
+                $lastWinner = $this->db->getGamer($lastRound['winner_id']);
+
+            } else if ( in_array(intval($lastRound['state']), [self::ROUND_PLAYED, self::ROUND_HAS_ANSWER]) ) {
+                header('Location: /view=answer');
+                die();
+            }
+        }
         $view = 'team';
         include __DIR__ . "/view/layout.php";
     }
@@ -84,7 +108,7 @@ class Controller {
             throw new Exception('Вы не зарегистрированы как участник');
         }
         $game = $this->db->getCurrentGame();
-        if ($game['id'] !== $_SESSION['game']) {
+        if (!$game || ($game && $game['id'] !== $_SESSION['game'])) {
             die(json_encode([
                 'gamersCount' => 0,
                 'ready' => false,
@@ -278,6 +302,17 @@ class Controller {
         ]);
     }
 
+    public function actionAdminEndCurrentGame()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        echo json_encode([
+            'result' => $this->db->endCurrentGame()
+        ]);
+        
+    }
+
     /*
      * подключившиеся к игре юзеры
      */
@@ -424,9 +459,8 @@ class Controller {
         if (!$round) {
             throw new Exception('Не начат раунд');
         }
-        $this->db->applyCurrentAnswer($round['id']);
         echo json_encode([
-            'result' => true
+            'result' => $this->db->applyCurrentAnswer($round['id'])
         ]);
     }
 
@@ -490,14 +524,15 @@ class Controller {
         $result = [];
         $team = [];
         foreach($teamList as $row) {
-            if (!$result[$row['id']]) {
-                $result[$row['id']] = [
-                    'name' => $row['name'],
-                    'scores' => $row['scores'],
+            $teamId = $row['id'] ? $row['id'] : -1;
+            if (!$result[$teamId]) {
+                $result[$teamId] = [
+                    'name' => $row['name'] ? $row['name'] : 'без команды',
+                    'scores' => $row['scores'] ? $row['scores'] : 0,
                     'members' => []
                 ];
             }
-            $result[$row['id']]['members'][] = [
+            $result[$teamId]['members'][] = [
                 'id' => $row['gamer_id'],
                 'name' => $row['gamer_name'],
                 'scores' => $row['gamer_scores']

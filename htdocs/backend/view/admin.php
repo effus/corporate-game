@@ -42,6 +42,7 @@
                                 </div>
                                 <div class="col">
                                     <button class="btn btn-danger btn-lg" onclick="Admin.onClickNewGame()">Новая игра</button>
+                                    <button class="btn btn-warning btn-sm mt-3" onclick="Admin.onClickEndGame()">Завершить</button>
                                 </div>
                                 <div class="col">
                                     <select id="gameType" class="form-control">
@@ -117,7 +118,7 @@
                                         </li>
                                         <li class="round-control-buttons list-group-item d-flex">
                                             <button id="startRound" class="btn btn-danger btn-sm flex-fill" onclick="Admin.onClickStartRound()">Старт!</button>
-                                            <button id="commitAnswer" class="btn btn-success btn-sm flex-fill" type="button" onclick="Admin.onClickCommitAnswer()">
+                                            <button id="commitAnswer" class="btn btn-success btn-sm flex-fill" type="button" onclick="Admin.onClickApplyAnswer()">
                                                 <img src="/frontend/icons/check.svg" width="24" height="24"
                                                      title="Принять"> Правильно!
                                             </button>

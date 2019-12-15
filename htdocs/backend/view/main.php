@@ -7,50 +7,55 @@
 
 <div class="accordion" id="accordionExample">
     
-  <div id="collapseOne" class="collapse mt-1" aria-labelledby="headingOne" data-parent="#accordionExample">
-      <div class="card">
-          <div class="card-body bg-dark">
-            
-<ul class="nav nav-pills">
-  <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Все команды</a>
-    <div class="dropdown-menu">
-      <a class="dropdown-item" href="/?view=answer">Team 1</a>
-    </div>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="#">
-        <img src="/frontend/icons/arrow-clockwise.svg" width="24" height="24" title="Refresh">
-    </a>
-  </li>
-</ul>
-
-
-          </div>
-      </div>
-    
-  </div>
   <div class="mt-3">
     <div class="" id="headingTwo">
+      <?php if ($game): ?>
       <h2 class="mb-0">
         <button class="btn btn-secondary btn-lg collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
           Присоединиться
         </button>
+        <?php if($_SESSION['id']): ?>
+        <script>let User = {registered: true};</script>
+        <?php endif;?>
       </h2>
+      <?php else: ?>
+        <h2 class="mb-0">Ждем начала игры</h2>
+        <script>
+        setTimeout(() => document.location.reload(), 5000);
+        </script>
+      <?php endif; ?>
     </div>
     <div id="collapseTwo" class="collapse mt-2" aria-labelledby="headingTwo" data-parent="#accordionExample">
       <div class="card">
         <div class="card-body bg-dark">
-          <form action="/?view=main" method="post" class="container-fluid">
+          <form action="/?view=main&action=new" method="post" class="container-fluid">
             
             <div class="row">
               <div class="col">
-                <input type="text" class="form-control w-100" name="gamer" placeholder="Имя/Фамилия">
+                <input type="text" class="form-control w-100" name="gamer" placeholder="Новый игрок">
               </div>
-              <div class="col-4">
-                <button type="submit" class="btn btn-primary w-100">Ok</button>
+              <div class="col-5">
+                <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
               </div>
             </div>
+
+          </form>
+
+          <form action="/?view=main&action=connect" method="post" class="container-fluid">
+
+            <?php if($_SESSION['id'] && $_SESSION['name']):?>
+            <div class="row mt-3">
+              <div class="col-2">
+                Или: 
+              </div>
+              <div class="col">
+                <input type="text" class="form-control w-100 bg-dark text-light" value="<?=$_SESSION['name']?>" disabled />
+              </div>
+              <div class="col-5">
+                <button type="submit" class="btn btn-primary w-100">Присоединиться</button>
+              </div>
+            </div>
+            <?php endif;?>
 
           </form>
 

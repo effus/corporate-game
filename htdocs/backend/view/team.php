@@ -1,29 +1,49 @@
+<?php
+/**
+ * @var $rounds array
+ */
+?>
+
 <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
   
 <? include __DIR__ . '/header.php'; ?>
 
   <main role="main" class="inner cover" id="noTeamnoGame" style="display: none;">
-   <h3>Мы формируем команды</h3>
-
-   <p>Сейчас регистрируются участники. Когда все будут готовы, мы случайным образом 
-       поделимся поровну (если это возможно) и начнем игру.</p> 
-
+  <?php if ( count($rounds) === 0 ): ?>
+    <h3>Мы формируем команды</h3>
+    <p>Сейчас регистрируются участники. Когда все будут готовы, мы случайным образом 
+       поделимся поровну (если это возможно) и начнем игру.</p>
     <h2 class="mb-3 gamers-count-container" style="display: none;">
         <span class="badge badge-warning gamer-count">0</span> участников
     </h2>
-
     <p>Кстати, название командам тоже будут даны случайным образом. Но вы их сможете 
         сменить. Наверное. Если успеете.</p>
-  </main>
+  
+  <?php endif; ?>
+
+  <p class="mt-5">Ждем начала следующего раунда</p>
+
+</main>
 
   <main role="main" class="inner cover" id="IhaveATeam" style="display: none;">
-    <h3>Вы в команде <a href="javascript:Team.onClickChangeName()"><span class="badge badge-success team-name">%teamname%</span></a> </h3>
+
+  <?php if ( count($rounds) > 0 ): ?>
+    <h3>Раунд завершен</h3>
+
+      <?php if($lastWinner): ?>
+        <p>Правильный ответ дал <span class="badge badge-danger"> <?=$lastWinner['name']?> </span></p>
+      <?php else: ?>
+        <p>Правильный ответ никто не дал</p>
+      <? endif; ?>
+
+      <p class="mt-2 mb-5">Ждем начала следующего раунда</p>
+
+    <?php endif; ?>
+
+    <h5>Вы в команде <a href="javascript:Team.onClickChangeName()"><span class="badge badge-success team-name">%teamname%</span></a> </h5>
 
     <ul class="list-group" id="members">
-      <li class="list-group-item bg-dark">Cras justo odio</li>
     </ul>
-
-    <p class="mt-5">Ждем начала раунда</p>
 
     <div class="row mt-5" id="teamNameForm" style="display:none;">
       <div class="col">
