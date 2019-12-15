@@ -32,6 +32,13 @@
                         <!-- tab1 -->
                         <div class="container">
                             <div class="row">
+                                <div class="col-2">
+                                    <select id="gameType" class="form-control">
+                                        <option value="1">Кто быстрее ответит</option>
+                                        <option value="2">Рандом</option>
+                                    </select>
+                                    <button class="btn btn-danger btn-lg" onclick="Admin.onClickNewGame()">Новая игра</button>
+                                </div>
                                 <div class="col" style="overflow: auto; height: 200px;">
                                     <ul class="list-group bg-dark">
                                         <? foreach ($games as $game): ?>
@@ -41,14 +48,7 @@
                                     </ul>
                                 </div>
                                 <div class="col">
-                                    <button class="btn btn-danger btn-lg" onclick="Admin.onClickNewGame()">Новая игра</button>
                                     <button class="btn btn-warning btn-sm mt-3" onclick="Admin.onClickEndGame()">Завершить</button>
-                                </div>
-                                <div class="col">
-                                    <select id="gameType" class="form-control">
-                                        <option value="1">Кто быстрее ответит</option>
-                                        <option value="2">Рандом</option>
-                                    </select>
                                 </div>
                                 <div class="col">
                                     <div class="input-group mb-3">
@@ -57,8 +57,6 @@
                                             <button class="btn btn-primary" onclick="Admin.onClickCreateCommands()">Создать команды</button>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col">
                                     <div><span class="badge badge-secondary" id="gamersCount">0</span> игроков</div>
                                     <div><span class="badge badge-secondary" id="teamsCount">0</span> команд</div>
                                     <div><button type="button" onclick="Admin.getGamers()">Get counts</button></div>

@@ -88,6 +88,24 @@ class Db {
     }
 
     /**
+     * @param [type] $gamerId
+     * @return void
+     */
+    public function unlinkGamerFromGames($gamerId)
+    {
+        try {
+            $stmt = $this->connection->prepare('UPDATE gamers SET game_id = NULL, team_id = NULL WHERE id = :id');
+            $stmt->bindParam(':id', $gamerId);
+            if ($stmt->execute() === false) {
+                throw new Exception(json_encode($stmt->errorInfo()));
+            }
+            return true;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при отключении пользователя от игры');
+        }
+    }
+
+    /**
      * @param [type] $gameId
      * @param [type] $gamerId
      * @return void
@@ -209,14 +227,23 @@ class Db {
         }
     }
 
+    /**
+     * @param [type] $gameId
+     * @return void
+     */
     public function getTeams($gameId)
     {
         try {
-            return $this->connection->query('SELECT t.*, g.id as gamer_id, g.name as gamer_name, g.scores as gamer_scores
+            $rows = $this->connection->query('SELECT t.*, g.id as gamer_id, g.name as gamer_name, g.scores as gamer_scores
                 FROM gamers g 
                 LEFT JOIN teams t ON g.team_id = t.id
                 WHERE g.game_id = ' . intval($gameId) . '
                 ORDER BY t.id, g.id', PDO::FETCH_ASSOC);
+            $result = [];
+            foreach($rows as $row) {
+                $result[] = $row;
+            }
+            return $result;
             
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении списка команд');

@@ -9,6 +9,9 @@ class Controller {
     const ROUND_PLAYED = 1;
     const ROUND_HAS_ANSWER = 2;
     const ROUND_FINISHED = 3;
+
+    const GAME_TYPE_WHOS_FIRST = 1;
+    const GAME_TYPE_RANDOM = 2;
     
     private $config;
     private $db;
@@ -45,6 +48,11 @@ class Controller {
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($_GET['action'] === 'new') {
+
+                    if ($_SESSION['id']) {
+                        $this->db->unlinkGamerFromGames($_SESSION['id']);
+                    }
+
                     $gamer = mb_substr(trim($_POST['gamer']), 0, 100);
                     $userId = $this->db->registerGamer($gamer, $game['id']);
                     $_SESSION['is_gamer'] = true;
@@ -58,8 +66,16 @@ class Controller {
                     $_SESSION['game'] = $game['id'];
                 }
 
-                header('Location: /?view=team');
-                return;   
+                if (intval($game['type']) === self::GAME_TYPE_WHOS_FIRST) {
+                    header('Location: /?view=team');
+                    return;   
+                } else if (intval($game['type']) === self::GAME_TYPE_RANDOM) {
+                    header('Location: /?view=random');
+                    return;   
+                } else {
+                    throw new Exception('Ошибка в игре: неизвестный тип игры');
+                }
+                
             }
         }
         $view = 'main';
@@ -163,6 +179,20 @@ class Controller {
             'result' => true
         ]);
     }
+
+    public function actionRandom()
+    {
+        if (!isset($_SESSION['is_gamer'])) {
+            throw new Exception('Вы не зарегистрированы как участник');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            header('Location: /');
+            die();
+        }
+        $view = 'random';
+        include __DIR__ . "/view/layout.php";
+    }
     
     /**
      * страница ответа
@@ -211,6 +241,47 @@ class Controller {
             'roundState' => $roundState,
             'currentAnswer' => $roundAnswer,
             'hash' => $hash,
+        ]);
+    }
+
+    /**
+     * получение статуса раунда в рандомайзере
+     * @return void
+     */
+    public function actionGetRoundRandomizerState() 
+    {
+        if (!isset($_SESSION['is_gamer'])) {
+            throw new Exception('Вы не зарегистрированы как участник');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            die(json_encode([
+                'gameFinished' => true,
+                'roundState' => 3,
+                'gamersCount' => 0,
+                'gamer' => null
+            ]));
+        }
+        $round = $this->db->getCurrentRound($game['id']);
+        $gamer = null;
+        if ($round) {
+            $roundState = intval($round['state']);
+            if ($roundState === self::ROUND_HAS_ANSWER) {
+                $answer = $this->db->getCurrentAnswer($round['id']);
+                $gamer = $answer['gamer_name'];
+            }
+        } else {
+            $game = $this->db->getCurrentGame();
+            if ($game['finished_at']) {
+                $roundState = 3;
+            } else {
+                $roundState = 0;
+            }
+        }
+        echo json_encode([
+            'roundState' => $roundState,
+            'gamersCount' => $this->db->getGamersCountForGame($_SESSION['game']),
+            'gamer' => $gamer
         ]);
     }
     
@@ -505,6 +576,35 @@ class Controller {
         }
         echo json_encode([
             'result' => $this->db->setNoAnswerInRound($round['id'])
+        ]);
+    }
+
+    /**
+     * @return void
+     */
+    public function actionAdminRunRandom()
+    {
+        if (!isset($_SESSION['is_admin'])) {
+            throw new Exception('Вы не админ');
+        }
+        $game = $this->db->getCurrentGame();
+        if (!$game) {
+            throw new Exception('Не начата игра');
+        }
+        $round = $this->db->getCurrentRound($game['id']);
+        if (!$round) {
+            throw new Exception('Не начат раунд');
+        }
+        $teamList = $this->db->getTeams($game['id']);
+        // нужно ли исключать уже выбираемых ранее?
+        if (count($teamList) === 0) {
+            throw new Exception('Нет игроков');
+        }
+        $i = rand(0,count($teamList) - 1);
+        $choosenOne = $teamList[$i];
+        $this->db->insertAnswer($choosenOne['gamer_id'], $round['id']);
+        echo json_encode([
+            'result' => $this->db->insertAnswer($choosenOne['gamer_id'], $round['id'])
         ]);
     }
     

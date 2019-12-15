@@ -57,7 +57,6 @@ const Answer = {
             });
     },
     update: () => {
-        console.debug('up', Answer.roundState, Answer.getStates().PLAYED, Answer.roundState === Answer.getStates().PLAYED);
         if (Answer.roundState === Answer.getStates().PLAYED) {
             if (Answer.myAnswerId) {
                 Answer.setAnswerDisabled();

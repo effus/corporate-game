@@ -96,8 +96,27 @@ const Admin = {
                 $('#noOne').hide();
             }
         } else {
-            Admin.setRoundStateLabel('Запустите рандомайзер');
-            $('#startRandom').show();
+            if (Admin.currentRound.state === 0) {
+                Admin.setRoundStateLabel('Начните раунд, на мониторе запустится виазулизация');
+                $('#startRound').show();
+            }  else if (Admin.currentRound.state === 1) {
+                Admin.setRoundStateLabel('Определить рандомного игрока');
+                $('#startRandom').show();
+            }  else if (Admin.currentRound.state === 2) {
+                if (Admin.currentRound.answer) {
+                    Admin.setRoundStateLabel('Выбран игрок: ' + Admin.currentRound.answer.gamer_name + (Admin.currentRound.answer.team_name ? ' / ' + Admin.currentRound.answer.team_name : ''));
+                } else {
+                    Admin.setRoundStateLabel('Кто-то выбран...');
+                }
+                $('#commitAnswer').show();
+                $('#startRandom').hide();
+            }  else if (Admin.currentRound.state === 3) {
+                if (Admin.currentRound.answer) {
+                    Admin.setRoundStateLabel('Выбран и подтвержден игрок: ' + Admin.currentRound.answer.gamer_name + (Admin.currentRound.answer.team_name ? ' / ' + Admin.currentRound.answer.team_name : ''));
+                } else {
+                    Admin.setRoundStateLabel('Кто-то выбран и подтвержден...');
+                }
+            }
         }
     },
     updateTeamsList: () => {
@@ -214,7 +233,15 @@ const Admin = {
             });
     },
     onClickRandom: () => {
-
+        console.debug('onClickRandom');
+        axios.get('/?view=adminRunRandom')
+            .then((response) => {
+                
+            })
+            .catch((err) => {
+                console.error('onClickRandom', err);
+                Admin.setRoundStateLabel('Ошибка: ' + err.message);
+            });
     },
     onClickRefreshTeamList: () => {
         $('#teamlist a').remove();
