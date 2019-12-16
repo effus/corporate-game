@@ -189,32 +189,42 @@ const Admin = {
             });
     },
     onClickApplyAnswer: () => {
-        console.debug('apply!');
+        Admin.canContinue = false;
         axios.get('/?view=adminApplyCurrentAnswer')
             .then((response) => {
+                Admin.canContinue = true;
+                console.debug('onClickApplyAnswer', response);
                 Admin.updateRoundPanelState();
             })
             .catch((err) => {
+                Admin.canContinue = true;
                 console.error('onClickCommitAnswer', err);
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
             });
     },
     onClickDenyAnswer: () => {
+        Admin.canContinue = false;
         axios.get('/?view=adminDenyCurrentAnswer')
             .then((response) => {
+                Admin.canContinue = true;
+                console.debug('onClickDenyAnswer', response);
                 Admin.currentRound.answer = {};
             })
             .catch((err) => {
-                console.error('onClickContinueAnswer', err);
+                Admin.canContinue = true;
+                console.error('onClickDenyAnswer', err);
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
             });
     },
     onClickNoAnswer: () => {
+        Admin.canContinue = false;
         axios.get('/?view=adminNoAnswerInRound')
             .then((response) => {
+                Admin.canContinue = true;
                 Admin.currentRound.answer = {};
             })
             .catch((err) => {
+                Admin.canContinue = true;
                 console.error('onClickContinueAnswer', err);
                 Admin.setRoundStateLabel('Ошибка: ' + err.message);
             });

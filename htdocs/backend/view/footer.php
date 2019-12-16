@@ -1,5 +1,5 @@
 <footer class="mastfoot mt-auto">
 <div class="inner">
-    <p>2019</p>
+    <p><?=date('d.m.Y')?></p>
 </div>
 </footer>

@@ -1,11 +1,11 @@
 const Answer = {
-    //canContinue: true,
     answerHash: '',
     roundState: 0,
     currentAnswerId: null,
     canAnswer: false,
     myAnswerId: null,
     isBtnPressed: false,
+    checkersCount: 0,
     getStates: () => {
         return {
             PLAYED: 1,
@@ -18,10 +18,13 @@ const Answer = {
         if (!Answer.isBtnPressed) {
             Answer.getState();
         } else {
-            setTimeout(Answer.init, 1000);
+            setTimeout(Answer.init,3000);
         }
     },
     getState: function() {
+        if (Answer.isBtnPressed) {
+            return;
+        }
         axios.get('/?view=getRoundState&hash=' + Answer.answerHash)
             .then((response) => {
                 Answer.roundState = response.data.roundState;
@@ -43,6 +46,7 @@ const Answer = {
     sendAnswer: function() {
         Answer.roundState = Answer.getStates().IN_PROGRESS;
         Answer.currentAnswerId = -1;
+        Answer.isBtnPressed = true;
         Answer.update();
         axios.get('/?view=sendAnswer&hash=' + Answer.answerHash)
             .then((response) => {
@@ -50,7 +54,9 @@ const Answer = {
                 Answer.currentAnswerId = response.data.currentAnswerId;
                 Answer.roundState = response.data.roundState;
                 Answer.update();
-
+                setTimeout(() => {
+                    Answer.isBtnPressed = false;
+                }, 5000);
             })
             .catch((err) => {
                 console.error('sendAnswer', err);
@@ -73,8 +79,13 @@ const Answer = {
                 Answer.setComment('Ваш ответ!');
                 Answer.setAnswerDisabled();
             } else {
-                Answer.setComment('Кто-то ответил быстрее');
-                Answer.setAnswerEnabled();
+                if (!Answer.myAnswerId) {
+                    Answer.setComment('Кто-то уже ответил, но вы так же можете нажать кнопку, если знаете ответ.');
+                    Answer.setAnswerEnabled();
+                } else {
+                    Answer.setComment('Отвечает другой игрок. В случае его ошибки очередь будут передана следующему.');
+                    Answer.setAnswerDisabled();
+                }
             }
         } else if (Answer.roundState === Answer.getStates().FINISHED) {
             Answer.setAnswerDisabled();

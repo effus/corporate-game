@@ -22,7 +22,7 @@ button {
 </div>
 <div class="row">
     <div class="col" id="btn-disabled" style="display: none;">
-        <button class="btn btn-secondary btn-lg answer-btn" disabled>Ответ</button>
+        <button class="btn btn-secondary btn-lg answer-btn" disabled>Ответ отправлен</button>
     </div>
     <div class="col" id="btn-enabled" style="display: none;">
         <button class="btn btn-secondary btn-lg answer-btn" onclick="Answer.onClickAnswer()">Ответ</button>

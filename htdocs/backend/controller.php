@@ -659,25 +659,48 @@ class Controller {
     public function actionGetMonitorScores()
     {
         $states = [
-            'Вопрос',
-            'Ждем ответ',
-            'Отвечает'
+            self::ROUND_CREATED => 'Готовимся к следующему раунду',
+            self::ROUND_PLAYED => 'Внимание, вопрос!',
+            self::ROUND_HAS_ANSWER => 'Есть ответ!',
+            self::ROUND_FINISHED => 'Раунд завершен'
         ];
-        
-        $result = null;
-        $state_i = rand(0,2);
-        $state = $states[$state_i];
-        if ($state_i === 2 && rand(0,1) === 1) {
-            $result = rand(0,1) === 1;
+        $game = $this->db->getCurrentGame();
+        $round = null;
+        $state = 'Ждем начала игры';
+        $roundState = 0;
+        $answer = null;
+        $info = '';
+        if ($game) {
+            $round = $this->db->getCurrentRound($game['id']);
+            $state = $states[self::ROUND_CREATED];
+            if ($round) {
+                $roundState = intval($round['state']);
+                $state = $states[$roundState] ? $states[$roundState] : 'Пауза';
+                if ($round['current_answer_id']) {
+                    $answer = $this->db->getCurrentAnswer($round['id']);
+                }
+            }
+            if (!$round) {
+                $gamersCount = $this->db->getGamersCountForGame($game['id']);
+                $info = 'Игроков учавствует: ' . $gamersCount;
+            }
+        } else {
+            $games = $this->db->getAllGames();
+            if (count($games) > 0) {
+                $game = reset($games);
+                $state = 'Игра завершена';
+            }
         }
-        
+
         echo json_encode([
-            'game' => 'Игра 1',
-            'round' => '1',
+            'game' => 'Игра #' . $game['id'],
             'state' => $state,
-            'hasAnswer' => $state_i === 2 ? true : false,
-            'team' => 'team 1',
-            'result' => $result
+            'hasAnswer' => $roundState === self::ROUND_HAS_ANSWER ? true : false,
+            'team' => $answer ? $answer['team_name'] : '',
+            'gamer' => $answer ? $answer['gamer_name'] : '',
+            'gamersCount' => $gamersCount,
+            'info' => $info,
+            'result' => $roundState === self::ROUND_FINISHED && !empty($round['winner_id'])
         ]);
     }
     

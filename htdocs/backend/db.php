@@ -15,7 +15,12 @@ class Db {
     public function getAllGames()
     {
         try {
-            return $this->connection->query('SELECT * FROM games ORDER BY id DESC', PDO::FETCH_ASSOC);
+            $rows = $this->connection->query('SELECT * FROM games ORDER BY id DESC', PDO::FETCH_ASSOC);
+            $result = [];
+            foreach($rows as $row) {
+                $result[] = $row;
+            }
+            return $result;
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении списка игр');
         }
@@ -409,15 +414,29 @@ class Db {
      */
     public function denyCurrentAnswer($roundId)
     {
-        try {        
-            $stmt = $this->connection->prepare('
-            UPDATE rounds r
-            SET 
-                r.state = 1,
-                r.current_answer_id = NULL
-            WHERE 
-                r.finished_at IS NULL
-            ');
+        try {
+            $answers = $this->getNextAnswersForRound($roundId);
+            if (count($answers) > 0) {
+                $stmt = $this->connection->prepare('
+                UPDATE rounds r
+                SET 
+                    r.state = 2,
+                    r.current_answer_id = :nextAnswer
+                WHERE 
+                    r.finished_at IS NULL
+                ');
+                $answer = reset($answers);
+                $stmt->bindParam(':nextAnswer', $answer['id']);
+            } else {
+                $stmt = $this->connection->prepare('
+                    UPDATE rounds r
+                    SET 
+                        r.state = 1,
+                        r.current_answer_id = NULL
+                    WHERE 
+                        r.finished_at IS NULL
+                    ');
+            }
             if (!$stmt->execute()) {
                 throw new Exception(json_encode($stmt->errorInfo()));
             }
@@ -489,6 +508,30 @@ class Db {
             }
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении ответа на данный раунд');
+        }
+    }
+
+    /**
+     * @param [type] $roundId
+     * @return void
+     */
+    public function getNextAnswersForRound($roundId)
+    {
+        try {
+            $rows = $this->connection->query('
+                SELECT 
+                    a.*
+                FROM answers a
+                INNER JOIN rounds r ON r.id = a.round_id
+                WHERE a.round_id = ' . intval($roundId) . ' AND a.id > r.current_answer_id 
+                ORDER BY id DESC', PDO::FETCH_ASSOC);
+            $result = [];
+            foreach($rows as $row) {
+                $result[] = $row;
+            }
+            return $result;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при получении списка ответов для раунда');
         }
     }
 

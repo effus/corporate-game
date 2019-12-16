@@ -1,23 +1,23 @@
 <style>
 .big-clock {
-    font-size: 100px;
+    font-size: 50px;
     background-color: #000;
 }
 </style>
 
-<main class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+<main class="d-flex w-100 h-100 p-3 mx-auto flex-column">
 
 <? include __DIR__ . '/header.php'; ?>
 
 <main role="main" class="inner cover">
-<div class="row">
+<div class="row mb-3">
     <div class="col">
         <h3 id="gameName" style="color:gray;">%game_name%</h3>
     </div>
 </div>
-<div class="row">
+<div class="row mb-3">
     <div class="col">
-        <h1 id="roundName">%round_name%</h1>
+        <h5 id="info"></h5>
     </div>
 </div>
 <div class="row" id="state">

@@ -27,7 +27,7 @@ const Monitor = {
 
     update: (data) => {
         document.querySelector('#gameName').innerHTML = data.game;
-        document.querySelector('#roundName').innerHTML = data.round;
+        document.querySelector('#info').innerHTML = data.info;
         document.querySelector('#state .big-clock').innerHTML = data.state;
         if (data.hasAnswer === true) {
             document.querySelector('#answering').style = 'display: block';
