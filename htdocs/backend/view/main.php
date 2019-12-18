@@ -28,14 +28,35 @@
     <div id="collapseTwo" class="collapse mt-2" aria-labelledby="headingTwo" data-parent="#accordionExample">
       <div class="card">
         <div class="card-body bg-dark">
-          <form action="/?view=main&action=new" method="post" class="container-fluid">
+          <script>
+          const Register = {
+            submit: function() {
+              const gamerName = document.querySelector('#new_gamer input[name=gamer]').value;
+              if (!gamerName) {
+                const input = document.querySelector('#new_gamer input[name=gamer]');
+                input.classList.add('is-invalid');
+                input.focus();
+                return false;
+              }
+              const btn = document.querySelector('#new_gamer button');
+              btn.classList.add('disabled');
+              btn.setAttribute('disabled', true);
+              return true;
+            }
+          };
+          document.addEventListener('DOMContentLoaded', () => {
+            $('button').popover();
+          });
+          </script>
+          <form id="new_gamer" action="/?view=main&action=new" method="post" class="container-fluid" onsubmit="return Register.submit()">
             
             <div class="row">
               <div class="col">
                 <input type="text" class="form-control w-100" name="gamer" placeholder="Новый игрок">
               </div>
               <div class="col-5">
-                <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+                <button type="submit" class="btn btn-primary w-100" data-toggle="popover" data-placement="bottom" 
+                  data-content="Давайте сосредоточимся, и еще раз: прежде всего нам нужно знать ваше имя...">Зарегистрироваться</button>
               </div>
             </div>
 

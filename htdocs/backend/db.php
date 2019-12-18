@@ -80,6 +80,10 @@ class Db {
     public function registerGamer($name, $gameId)
     {
         try {
+            $rounds = $this->getAllRounds($gameId);
+            if (count($rounds) > 0) {
+                throw new Exception('Игра уже началась, регистрация невозможна');
+            }
             $stmt = $this->connection->prepare('INSERT INTO gamers (name, game_id) VALUES (:name, :game_id)');
             $stmt->bindParam(':name', $name);
             $stmt->bindParam(':game_id', $gameId);
@@ -174,6 +178,19 @@ class Db {
             
         } catch (Exception $e) {
             throw new Exception('Ошибка при получении списка игроков');
+        }
+    }
+
+    public function checkTeamName($name)
+    {
+        try {
+            $stmt = $this->connection->prepare('SELECT count(*) as c FROM teams'); //  WHERE name = :name
+            $stmt->bindParam(':name', $name, PDO::PARAM_STR);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);    
+            return intval($row['c']) > 0;
+        } catch (Exception $e) {
+            throw new Exception('Ошибка при создании команды: ' . $e->getMessage());
         }
     }
 

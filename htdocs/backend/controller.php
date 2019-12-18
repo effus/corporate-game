@@ -42,7 +42,8 @@ class Controller {
         if ($game) {
 
             $rounds = $this->db->getAllRounds($game['id']);
-            if (count($rounds) > 0) {
+            $teamsCount = $this->db->getTeamsCountInGame($game['id']);
+            if (count($rounds) > 0 || $teamsCount > 0) {
                 throw new Exception('Игра уже началась, дождитесь следующей');
             }
 
@@ -424,8 +425,15 @@ class Controller {
         }
         shuffle($gamerIds);
         $chunked = array_chunk($gamerIds, ceil(count($gamerIds) / $commandCount));
+        $teamNames = [];
         foreach($chunked as $chunk) {
-            $teamId = $this->db->newTeam($this->getRandomTeamName());
+            $teamName = $this->getRandomTeamName();
+            $exists = in_array($teamName, $teamNames);
+            if ($exist) {
+                $teamName = $teamName . ' ' . round(100, 999);
+            }
+            $teamId = $this->db->newTeam($teamName);
+            $teamNames[] = $teamName;
             foreach($chunk as $gamerId) {
                 $this->db->setTeamForGamer($teamId, $gamerId);
             }

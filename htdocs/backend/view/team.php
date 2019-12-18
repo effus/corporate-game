@@ -12,9 +12,9 @@
   <?php if ( count($rounds) === 0 ): ?>
     <h3>Мы формируем команды</h3>
     <p>Сейчас регистрируются участники. Когда все будут готовы, мы случайным образом 
-       поделимся поровну (если это возможно) и начнем игру.</p>
+       поделим вас поровну (если это возможно) и начнем игру.</p>
     <h2 class="mb-3 gamers-count-container" style="display: none;">
-        <span class="badge badge-warning gamer-count">0</span> участников
+        <span class="badge badge-warning gamer-count">0</span> <span id="memberlabel"></span>
     </h2>
     <p>Кстати, названия командам тоже будут даны случайным образом. Но вы их сможете 
         сменить. Наверное. Если успеете.</p>
@@ -40,8 +40,18 @@
 
     <?php endif; ?>
 
-    <h5>Вы в команде <a href="javascript:Team.onClickChangeName()"><span class="badge badge-success team-name">%teamname%</span></a> </h5>
+    <h5>Вы в команде 
+      <a href="javascript:Team.onClickChangeName()">
+        <span class="badge badge-primary team-name">%teamname%</span> 
+      </a>
+    </h5>
+    <div class="row mb-5">
+      <div class="col">
+        Менять имя разрешено один раз за игру одному из игроков команды. 
+      </div>
+    </div>
 
+    <div>Состав вашей команды: </div>
     <ul class="list-group" id="members">
     </ul>
 
@@ -53,11 +63,6 @@
             <button class="btn btn-success" type="button" onclick="Team.onClickSetName()">Изменить</button>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col">
-        Менять имя разрешено один раз за игру одному из игроков команды. 
       </div>
     </div>
   </main>

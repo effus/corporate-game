@@ -37,6 +37,11 @@ const Team = {
                 setTimeout(Team.init, 3000);
             });
     },
+    getMemberLabel: (n) => {
+        const forms = ['участников', 'участник', 'участника'];
+        plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);
+        return forms[n];
+    },
     update: (data) => {
         if (Team.name) {
             $('#noTeamnoGame').hide();
@@ -51,6 +56,7 @@ const Team = {
         } else {
             $('.gamers-count-container').show();
             $('.gamer-count').text(Team.gamersCount);
+            $('#memberlabel').text(Team.getMemberLabel(Team.gamersCount));
             $('#noTeamnoGame').show();
             $('#IhaveATeam').hide();
         }

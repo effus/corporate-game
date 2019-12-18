@@ -156,6 +156,7 @@ const Admin = {
         axios.get('/?view=createCommands&count=' + commandCount)
             .then((response) => {
                 //document.location.reload();
+                Admin.getGamers();
             })
             .catch((err) => {
                 console.error('onClickNewGame', err);
